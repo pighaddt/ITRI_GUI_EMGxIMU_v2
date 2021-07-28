@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1600</width>
+    <height>1000</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,23 +19,36 @@
      <rect>
       <x>50</x>
       <y>40</y>
-      <width>701</width>
-      <height>411</height>
+      <width>1531</width>
+      <height>861</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout"/>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="start">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>470</y>
-      <width>701</width>
+      <x>430</x>
+      <y>900</y>
+      <width>351</width>
       <height>28</height>
      </rect>
     </property>
     <property name="text">
-     <string>PushButton</string>
+     <string>Start Serial Port</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="stop">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>900</y>
+      <width>351</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop Serial Port</string>
     </property>
    </widget>
   </widget>
@@ -44,7 +57,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1600</width>
      <height>25</height>
     </rect>
    </property>
