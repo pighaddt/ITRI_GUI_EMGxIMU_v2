@@ -18,20 +18,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self) # your init setupUI function
         self.p1, self.p2, self.p3, self.p4 = self.set_graph_ui()  # set the drawing window
         self.ui.start.clicked.connect(self.threadStart)
-        self.ui.stop.clicked.connect(self.stop_plot)
-        # self.comPortSetting()
-        # self.EMGIMUDataSetting()
+        # self.ui.stop.clicked.connect(self.stop_plot)
+        self.comPortSetting()
+        self.EMGIMUDataSetting()
         self.isSerialPort = False
-
+        self.isReadLine = False
         # while True:
         #     self.plot_EMG_IMU_Data()
 
     def comPortSetting(self):
-        global ser1, portName1, baudRate1
+        global ser1, portName1, baudRate1, data
         # Create object serial port
         portName1 = "COM9"
         baudRate1 = 9600  # FW1.0 115200 FW2.0 9600
-        # ser1 = serial.Serial(portName1, int(baudRate1), timeout=1, parity=serial.PARITY_NONE, stopbits=1)
+        self.ser1 = serial.Serial(portName1, int(baudRate1), timeout=1, parity=serial.PARITY_NONE, stopbits=1)
         # data = ser1.readline().decode("utf-8", errors='ignore')
         # print(data)
     def EMGIMUDataSetting(self):
@@ -45,7 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ZeroData = linspace(0, 0, windowWidth_IMU)
 
     def set_graph_ui(self):
-        global curve1, curve2, curve3, curve4
+        global curve1, curve2, curve3, curve4, p2
         Y_EMG_range = [-3000, 3000]
         pg.setConfigOptions(antialias=True)  # pg global variable setting function, antialias=True open curve anti-aliasing
         win = pg.GraphicsLayoutWidget()  # Create pg layout for automatic management of data interface layout
@@ -161,16 +161,54 @@ class MainWindow(QtWidgets.QMainWindow):
     #     #     self.isSerialPort = False
     #     #     print()
     def threadStart(self):
+        global IMU1Data
+        # IMU1Data = linspace(0, 0, 100)  # create array that will contain the relevant time series
         t = threading.Thread(target=self.start_plot, name='t')
         t.start()
 
     def start_plot(self):
+        global p2,  curve1, curve2, curve3, curve4 , EMGData, IMU1Data, IMU2Data, IMU3Data, ser1, isSerialPort, portName1, baudRate1, ZeroData, data
+        if IMU1Data[-1] != 0:
+            print("P2 clear")
+            IMU1Data = linspace(0, 0, 100)
+
+
+        # self.p1, self.p2, self.p3, self.p4 = self.set_graph_ui()  # set the drawing window
         self.isSerialPort = True
         print("thread is ready!")
+        # self.ser1 = serial.Serial(portName1, int(baudRate1), timeout=1, parity=serial.PARITY_NONE, stopbits=1)
+
         # print(self.isSerialPort)
+        # judge is readline
         while True:
+
             if self.isSerialPort == True:
-                print("ploting graph")
+                # print("ploting graph")
+                data = self.ser1.readline().decode("utf-8", errors="ignore")
+                print(data)
+                # if len(data) > 1:
+                if str(data[4:5]) == 'P':  # verify String Data
+                    data = str(data)
+                    data = data[4:-2]
+                    # print(data)
+                    splitData = data.split(',')
+                    print(splitData)
+                    pitchStr = splitData[0]
+                    rollStr = splitData[1]
+                    yawStr = splitData[2]
+                    IMU1Data[:-1] = IMU1Data[1:]  # shift pitch data in the temporal mean 1 sample left
+                    IMU2Data[:-1] = IMU2Data[1:]  # shift roll data in the temporal mean 1 sample left
+                    IMU3Data[:-1] = IMU3Data[1:]  # shift roll data in the temporal mean 1 sample left
+
+                    IMU1Data[-1] = float(pitchStr[2:])  # pitchStr : R= pitch
+                    IMU2Data[-1] = float(rollStr[2:])  # vector containing the instantaneous values
+                    IMU3Data[-1] = float(yawStr[2:])  # vector containing the instantaneous values
+                    print("lastpitch" + (pitchStr[2:]))
+                    curve2.setData(IMU1Data)  # set the curve with these data
+                    curve3.setData(IMU2Data)  # set the curve with these data
+                    curve4.setData(IMU3Data)  # set the curve with these data
+                    curve2.setPos(len(IMU1Data), 0)  # set x posiYtion in the graph to 0
+                    QApplication.processEvents()  # process the plot now
             else:
                 break
         print(" successful pause")
@@ -178,8 +216,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def stop_plot(self):
+        global ZeroData, ser1
         self.isSerialPort = False
+        # ser1.close()
         print("ploting stop")
+
+
+
 
 
 
