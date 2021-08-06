@@ -55,8 +55,8 @@ storagePath = f"{desktop}\\{d1}{current_time}.csv"
 def update():
     global curve, curve2, ptr, Xm, saveData, index
     value = ser.readline().decode("utf-8", errors = 'ignore')
-    # print(value)
-    saveData.append(value)
+    print(value)
+    # saveData.append(value)
     if len(value) > 2:
         value = float(value)
         if int(value / 10000) == 2:
@@ -86,13 +86,13 @@ def update():
                     # curve2.setData(rms)  # set the curve with these data
                     # curve.setPos(ptr, 0)  # set x posiYtion in the graph to 0
                     QtGui.QApplication.processEvents()  # process the plot now
-                    if index % 500 == 0:
-                        with open(storagePath, "w", newline="\n") as csvfile:
-                            wr = csv.writer(csvfile)
-                            print("Save Data to .CSV")
-                            # wr.writerow(saveData[1: index])
-                            for word in range(1, len(saveData)):
-                                wr.writerow([saveData[word]])
+                    # if index % 500 == 0:
+                    #     with open(storagePath, "w", newline="\n") as csvfile:
+                    #         wr = csv.writer(csvfile)
+                    #         print("Save Data to .CSV")
+                    #         # wr.writerow(saveData[1: index])
+                    #         for word in range(1, len(saveData)):
+                    #             wr.writerow([saveData[word]])
 
     # # Filtered signal: Median Filter to solve Baseline Wandering.
     # if value != '\r\n':
