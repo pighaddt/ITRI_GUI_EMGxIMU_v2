@@ -29,7 +29,8 @@ import random
 
 
 class SignalCommunicate(PyQt5.QtCore.QObject):
-    request_graph_update = PyQt5.QtCore.pyqtSignal()
+    request_IMUgraph_update = PyQt5.QtCore.pyqtSignal()
+    request_EMGgraph_update = PyQt5.QtCore.pyqtSignal()
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -42,8 +43,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.ui.pushButton_StartPlot.clicked.connect(self.threadStart)
         self.ui.pushButton_EMG.clicked.connect(self.connectEMGSP)
         self.ui.pushButton_IMU.clicked.connect(self.connectIMUSP)
-        self.ui.pushButton_StartEMGPlot.clicked.connect(self.threadStart)
-        self.ui.pushButton_CloseEMGPlot.clicked.connect(self.stop_plot)
+        self.ui.pushButton_StartIMUPlot.clicked.connect(self.threadIMUStart)
+        self.ui.pushButton_CloseIMUPlot.clicked.connect(self.stop_IMUplot)
+        self.ui.pushButton_StartEMGPlot.clicked.connect(self.threadEMGStart)
+        self.ui.pushButton_CloseEMGPlot.clicked.connect(self.stop_EMGplot)
         self.ui.pushButton_searchSP.clicked.connect(self.searchComPort)
         self.ui.pushButton_LoadEMG.clicked.connect(self.loadEMG)
         self.ui.pushButton_LoadIMU.clicked.connect(self.loadIMU)
@@ -59,7 +62,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # Signals that can be emitted
         self.signalComm = SignalCommunicate()
         # Update graph whenever the 'request_graph_update' signal is emitted
-        self.signalComm.request_graph_update.connect(self.update_graph)
+        self.signalComm.request_IMUgraph_update.connect(self.update_IMUgraph)
+        self.signalComm.request_EMGgraph_update.connect(self.update_EMGgraph)
 
         # a figure instance to plot on
         self.figure1 = plt.figure()
@@ -96,7 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.comboBox_Device1BR.addItem(self.bpsArray[i])
             self.ui.comboBox_Device2BR.addItem(self.bpsArray[i])
         self.ui.comboBox_Device1BR.setCurrentIndex(2)
-        self.ui.comboBox_Device2BR.setCurrentIndex(0)
+        self.ui.comboBox_Device2BR.setCurrentIndex(1)
 
     def searchComPort(self):
         self.ui.textEdit_info.setReadOnly(True)
@@ -223,33 +227,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return p5, p6
 
-    def threadStart(self):
-        dataThread = threading.Thread(target=self.start_plot, name='dataThread')
-        dataThread.start()
+    def threadEMGStart(self):
+        dataEMGThread = threading.Thread(target=self.start_EMGplot, name='dataEMGThread')
+        dataEMGThread.start()
 
-    def start_plot(self):
-        global curve1, curve2, curve3, curve4
-        # self.isSerialPort = True
+    def threadIMUStart(self):
+        dataIMUThread = threading.Thread(target=self.start_IMUplot, name='dataIMUThread')
+        dataIMUThread.start()
 
-        # self.portNameEMG = self.ui.comboBox_Device1CP.currentText()
-        self.portNameIMU = self.ui.comboBox_Device2CP.currentText()
+    def start_EMGplot(self):
         self.portNameEMG = self.ui.comboBox_Device1CP.currentText()
-        # self.EMGData1 = np.linspace(0, 0, self.windowWidth_EMG)
-        # self.EMGData2 = np.linspace(0, 0, self.windowWidth_EMG)
-        self.IMU1Data = np.linspace(0, 0, self.windowWidth_IMU)
-        self.IMU2Data = np.linspace(0, 0, self.windowWidth_IMU)
-        self.IMU3Data = np.linspace(0, 0, self.windowWidth_IMU)
 
-
-        while self.portNameIMU and self.portNameEMG is not None:
-            self.ui.pushButton_StartPlot.setEnabled(False)
+        while self.portNameEMG is not None:
+            self.ui.pushButton_StartEMGPlot.setEnabled(False)
             dataEMG = self.serEMG.readline().decode("utf-8", errors="ignore").splitlines()
-            # dataIMU = self.serIMU.readline().decode("utf-8", errors="ignore")
-            # print("EMG :" + str(dataEMG))
-            # print("IMU :" + dataIMU)
-            # splitData = dataEMG.split('\n')
-            # print(splitData)
-            # print(len(dataEMG[0]))
+            print(dataEMG)
             if len(dataEMG[0]) == 5 :
                 dataEMG[0] = int(dataEMG[0])
                 # print(threading.currentThread().getName())
@@ -268,52 +260,75 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.EMGData2[:-1] = self.EMGData2[1:]
                     dataEMG[0] = (dataEMG[0] % 10000) - 1500
                     self.EMGData2[-1] = dataEMG[0]  # vector containing the instantaneous values
-                    # if self.index2 % 20 == 0:
-                    # curve6.setData(self.EMGData2)  # set the curve with these data
-                    # QApplication.processEvents()  # process the plot now
-                    # self.index2 = 0
-            # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
-            self.signalComm.request_graph_update.emit()
 
-            # if str(dataIMU[4:5]) == 'P':  # verify String Data
-            #     dataIMU = str(dataIMU)
-            #     dataIMU = dataIMU[4:-2]
-            #     # print("dataIMU" + dataIMU)
-            #     splitData = dataIMU.split(',')
-            #     pitchStr = splitData[0]
-            #     rollStr = splitData[1]
-            #     yawStr = splitData[2]
-            #     self.IMU1Data[:-1] = self.IMU1Data[1:]  # shift pitch data in the temporal mean 1 sample left
-            #     self.IMU2Data[:-1] = self.IMU2Data[1:]  # shift roll data in the temporal mean 1 sample left
-            #     self.IMU3Data[:-1] = self.IMU3Data[1:]  # shift roll data in the temporal mean 1 sample left
-            #
-            #     self.IMU1Data[-1] = float(pitchStr[2:])  # pitchStr : R= pitch
-            #     self.IMU2Data[-1] = float(rollStr[2:])  # vector containing the instantaneous values
-            #     self.IMU3Data[-1] = float(yawStr[2:])  # vector containing the instantaneous values
-            #     # print("lastpitch" + (pitchStr[2:]))
-            #     curve2.setData(self.IMU1Data)  # set the curve with these data
-            #     curve3.setData(self.IMU2Data)  # set the curve with these data
-            #     curve4.setData(self.IMU3Data)  # set the curve with these data
-            #     QApplication.processEvents()  # process the plot now
-            #     # print(splitData)
+            # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
+            self.signalComm.request_EMGgraph_update.emit()
+
+
+
+        print(" successful pause")
+
+
+    def start_IMUplot(self):
+        self.portNameIMU = self.ui.comboBox_Device2CP.currentText()
+
+        while self.portNameIMU is not None:
+            self.ui.pushButton_StartIMUPlot.setEnabled(False)
+            dataIMU = self.serIMU.readline().decode("utf-8", errors="ignore")
+            print(len(dataIMU))
+            print(dataIMU[4:5])
+            if dataIMU[4:5] == 'P':  # verify String Data
+                dataIMU = str(dataIMU)
+                dataIMU = dataIMU[4:-2]
+                # print("dataIMU" + dataIMU)
+                splitData = dataIMU.split(',')
+                # print(splitData)
+                pitchStr = splitData[0]
+                rollStr = splitData[1]
+                yawStr = splitData[2]
+                self.IMU1Data[:-1] = self.IMU1Data[1:]  # shift pitch data in the temporal mean 1 sample left
+                self.IMU2Data[:-1] = self.IMU2Data[1:]  # shift roll data in the temporal mean 1 sample left
+                self.IMU3Data[:-1] = self.IMU3Data[1:]  # shift roll data in the temporal mean 1 sample left
+
+                self.IMU1Data[-1] = float(pitchStr[2:])  # pitchStr : R= pitch
+                self.IMU2Data[-1] = float(rollStr[2:])  # vector containing the instantaneous values
+                self.IMU3Data[-1] = float(yawStr[2:])  # vector containing the instantaneous values
+                # print(splitData)
+
+            # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
+            self.signalComm.request_IMUgraph_update.emit()
+
 
 
         print(" successful pause")
 
 
 
-    def stop_plot(self):
+    def stop_EMGplot(self):
         self.portNameEMG = None
-        self.ui.pushButton_StartPlot.setEnabled(True)
+        self.ui.pushButton_StartEMGPlot.setEnabled(True)
         # self.portNameIMU = None
         self.ui.textEdit_info.setText("Function Not Yet.......")
         print("ploting stop")
 
-    def update_graph(self):
+    def stop_IMUplot(self):
+        self.portNameIMU = None
+        self.ui.pushButton_StartIMUPlot.setEnabled(True)
+        self.ui.textEdit_info.setText("Function Not Yet.......")
+        print("ploting stop")
+
+    def update_EMGgraph(self):
         global curve5, curve6
-        print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
+        # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
         curve5.setData(self.EMGData1)
         curve6.setData(self.EMGData2)
+
+    def update_IMUgraph(self):
+        global curve2, curve3, curve4
+        # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
+        curve2.setData(self.IMU1Data)
+        curve3.setData(self.IMU2Data)
+        curve4.setData(self.IMU3Data)
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()
@@ -325,92 +340,99 @@ class MainWindow(QtWidgets.QMainWindow):
             return fileName
 
     def loadEMG(self):
-        global filenameEMG1, rms1, startPointArray
-        filenameEMG1 = self.openFileNameDialog()
-        print("EMG Filename" + filenameEMG1)
-        dataArray = pd.read_csv(filenameEMG1, skiprows=3, usecols=[3])
-        data = dataArray.iloc[:, 0]
+        global filenameEMG, rms1, startPointArray1, startPointArray2
+        filenameEMG = self.openFileNameDialog()
+        print("EMG Filename" + filenameEMG)
+        dataArray = pd.read_csv(filenameEMG, skiprows=3, usecols=[3, 4])
+        data1 = dataArray.iloc[:, 0]
+        data2 = dataArray.iloc[:, 1]
         # beforeMedianFrequency = plotTimeFrequencyDomain(data)
         # create an axis
-        rms1 = RMSDetect.rms_function(data, 50)
-        startPointArray = RMSDetect.startPoint(rms1, 270)
-        print(startPointArray)
+        rms1 = RMSDetect.rms_function(data1, 25)
+        rms2 = RMSDetect.rms_function(data1, 25)
+        startPointArray1 = RMSDetect.startPoint(rms1, 150)
+        startPointArray2 = RMSDetect.startPoint(rms2, 150)
         self.figure1.clear()
         ax = self.figure1.add_subplot()
 
+        # plot data
+        ax.plot(data1)
+        self.canvas1.draw()
 
-        # discards the old graph
-        # ax.hold(False) # deprecated, see above
+        self.figure2.clear()
+        ax = self.figure2.add_subplot()
 
         # plot data
-        ax.plot(data)
-        self.canvas1.draw()
+        ax.plot(data2)
+        self.canvas2.draw()
 
     def loadIMU(self):
         filename = self.openFileNameDialog()
-        print("EMG Filename" + filename)
-        dataArray = pd.read_csv(filename, skiprows=3, usecols=[5])
-        data = dataArray.iloc[:, 0]
-        # beforeMedianFrequency = plotTimeFrequencyDomain(data)
-        # create an axis
-        ax = self.figure2.add_subplot(111)
-
-        # discards the old graph
-        # ax.hold(False) # deprecated, see above
-
-        # plot data
-        ax.plot(data)
-        # plt.xticks(range(7), [0, 2000, 4000, 6000, 8000, 10000, 120000])
-        self.canvas2.draw()
+        # print("IMU Filename" + filename)
+        # dataArray = pd.read_csv(filename, skiprows=3, usecols=[5])
+        # data = dataArray.iloc[:, 0]
+        # # beforeMedianFrequency = plotTimeFrequencyDomain(data)
+        # # create an axis
+        # ax = self.figure2.add_subplot(111)
+        #
+        # # discards the old graph
+        # # ax.hold(False) # deprecated, see above
+        #
+        # # plot data
+        # ax.plot(data)
+        # # plt.xticks(range(7), [0, 2000, 4000, 6000, 8000, 10000, 120000])
+        # self.canvas2.draw()
 
     def EMGDevice1Click(self):
-        global filenameEMG1, rms1, startPointArray
-        # filenameEMG1 = 'C:/Users/nobody/Desktop/test_2.csv'
-        if filenameEMG1 is not None:
+        global filenameEMG, rms1, startPointArray1
+        if filenameEMG is not None:
             #RMS Detect Function start
             if self.ui.checkBox_EMGDevice1.isChecked():
-                dataArray = pd.read_csv(filenameEMG1, skiprows=3, usecols=[3])
+                dataArray = pd.read_csv(filenameEMG, skiprows=3, usecols=[3])
                 data = dataArray.iloc[:, 0]
-                # beforeMedianFrequency = plotTimeFrequencyDomain(data)
-                # create an axis
                 self.figure1.clear()
                 ax = self.figure1.add_subplot()
-
-                # discards the old graph
-                # ax.hold(False) # deprecated, see above
-                # plot data
                 ax.plot(data)
-                # ax.plot(rms1, 'r')
-                for i in range(len(startPointArray)):
+                ax.plot(rms1)
+                for i in range(len(startPointArray1)):
                     if i%2 == 1:
-                        ax.plot(startPointArray[i], rms1[i], marker="o", color="r")
+                        ax.plot(startPointArray1[i], rms1[i], marker="o", color="r")
                     else:
-                        ax.plot(startPointArray[i], rms1[i], marker="o", color="k")
-
-
-                # ax.plot([5000, 5000], [-300, 300], 'r')
-                # ax.plot([6000, 6000], [-300, 300], 'b')
-                # plt.xticks(range(7), [0, 2000, 4000, 6000, 8000, 10000, 120000])
+                        ax.plot(startPointArray1[i], rms1[i], marker="o", color="k")
                 self.canvas1.draw()
 
             else:
-                dataArray = pd.read_csv(filenameEMG1, skiprows=3, usecols=[3])
+                dataArray = pd.read_csv(filenameEMG, skiprows=3, usecols=[3])
                 data = dataArray.iloc[:, 0]
-                # beforeMedianFrequency = plotTimeFrequencyDomain(data)
-                # create an axis
                 self.figure1.clear()
                 ax = self.figure1.add_subplot()
-
-                # discards the old graph
-                # ax.hold(False) # deprecated, see above
-
-                # plot data
                 ax.plot(data)
-                # plt.xticks(range(7), [0, 2000, 4000, 6000, 8000, 10000, 120000])
                 self.canvas1.draw()
 
     def EMGDevice2Click(self):
-        print("aa")
+        global filenameEMG, rms2, startPointArray2
+        if filenameEMG is not None:
+            # RMS Detect Function start
+            if self.ui.checkBox_EMGDevice2.isChecked():
+                dataArray = pd.read_csv(filenameEMG, skiprows=3, usecols=[4])
+                data = dataArray.iloc[:, 0]
+                self.figure2.clear()
+                ax = self.figure2.add_subplot()
+                ax.plot(data)
+                for i in range(len(startPointArray2)):
+                    if i % 2 == 1:
+                        ax.plot(startPointArray2[i], rms1[i], marker="o", color="r")
+                    else:
+                        ax.plot(startPointArray2[i], rms1[i], marker="o", color="k")
+                self.canvas2.draw()
+
+            else:
+                dataArray = pd.read_csv(filenameEMG, skiprows=3, usecols=[4])
+                data = dataArray.iloc[:, 0]
+                self.figure2.clear()
+                ax = self.figure2.add_subplot()
+                ax.plot(data)
+                self.canvas2.draw()
 
 
 if __name__ == '__main__':
