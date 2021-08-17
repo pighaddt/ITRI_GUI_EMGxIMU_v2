@@ -1,3 +1,5 @@
+import csv
+import os
 import threading
 
 import PyQt5
@@ -15,6 +17,9 @@ import pyqtgraph as pg
 import numpy as np
 
 import matplotlib
+
+from datetime import date
+from datetime import datetime
 
 from plotTimeFrequencyDomain import plotTimeFrequencyDomain
 
@@ -52,6 +57,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.pushButton_LoadIMU.clicked.connect(self.loadIMU)
         self.ui.checkBox_EMGDevice1.clicked.connect(self.EMGDevice1Click)
         self.ui.checkBox_EMGDevice2.clicked.connect(self.EMGDevice2Click)
+        self.ui.pushButton_SaveIMUData.clicked.connect(self.IMUSaveData)
+        self.ui.pushButton_SaveEMGData.clicked.connect(self.EMGSaveData)
         # self.comPortSetting()
         self.EMGIMUDataSetting()
         self.bpsArray = ['4800', '9600', '115200']
@@ -83,11 +90,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.verticalLayout_3.addWidget(self.canvas1)
         self.ui.verticalLayout_4.addWidget(self.canvas2)
         self.ui.verticalLayout_5.addWidget(self.canvas3)
+        today = date.today()
+        desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        d1 = today.strftime("%b-%d-%Y")
+        now = datetime.now()
+        current_time = now.strftime("%H-%M-%S")
+        self.storagePathIMU = f"{desktop}\\{d1}{current_time}IMU.csv"
+        self.storagePathEMG = f"{desktop}\\{d1}{current_time}EMG.csv"
 
         matplotlib.rcParams.update({'font.size': 8})
 
     def EMGIMUDataSetting(self):
-        self.windowWidth_EMG = 1000
+        self.windowWidth_EMG = 500
         self.windowWidth_IMU = 100
         self.IMU1Data = linspace(0, 0, self.windowWidth_IMU)  # create array that will contain the relevant time series
         self.IMU2Data = linspace(0, 0, self.windowWidth_IMU)  # create array that will contain the relevant time series
@@ -209,7 +223,7 @@ class MainWindow(QtWidgets.QMainWindow):
         p5.setLogMode(x=False, y=False)  # False stands for linear axis, True stands for logarithmic axis
         p5.setLabel('bottom', text='points', color='#000000', units='s')  # x axis setting function
         p5.setYRange(min=int(Y_EMG_range[0]), max=int(Y_EMG_range[1]))
-        p5.setXRange(0, 1000) # bigger than 1000 will use k units
+        # p5.setXRange(0, 1000) # bigger than 1000 will use k units
         p5.addLegend()  # Select whether to add legend
 
         curve5 = p5.plot(pen=pg.mkPen(color='k', width=2.0), name="EMG Raw Data Channel 1")  ##pitch EMG
@@ -241,9 +255,10 @@ class MainWindow(QtWidgets.QMainWindow):
         while self.portNameEMG is not None:
             self.ui.pushButton_StartEMGPlot.setEnabled(False)
             dataEMG = self.serEMG.readline().decode("utf-8", errors="ignore").splitlines()
-            print(dataEMG)
-            if len(dataEMG[0]) == 5 :
+            # print(dataEMG)
+            if len(dataEMG[0]) == 5:
                 dataEMG[0] = int(dataEMG[0])
+                print(dataEMG[0])
                 # print(threading.currentThread().getName())
                 if int(dataEMG[0] / 10000) == 1:
                     # self.index1 = self.index1 + 1
@@ -340,7 +355,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return fileName
 
     def loadEMG(self):
-        global filenameEMG, rms1, startPointArray1, startPointArray2
+        global filenameEMG, rms1, startPointArray1, startPointArray2, rms2
         filenameEMG = self.openFileNameDialog()
         print("EMG Filename" + filenameEMG)
         dataArray = pd.read_csv(filenameEMG, skiprows=3, usecols=[3, 4])
@@ -348,10 +363,10 @@ class MainWindow(QtWidgets.QMainWindow):
         data2 = dataArray.iloc[:, 1]
         # beforeMedianFrequency = plotTimeFrequencyDomain(data)
         # create an axis
-        rms1 = RMSDetect.rms_function(data1, 25)
-        rms2 = RMSDetect.rms_function(data1, 25)
-        startPointArray1 = RMSDetect.startPoint(rms1, 150)
-        startPointArray2 = RMSDetect.startPoint(rms2, 150)
+        rms1 = RMSDetect.rms_function(data1, 10)
+        rms2 = RMSDetect.rms_function(data2, 10)
+        startPointArray1 = RMSDetect.startPoint(rms1, 300, 50)
+        startPointArray2 = RMSDetect.startPoint(rms2, 300, 50)
         self.figure1.clear()
         ax = self.figure1.add_subplot()
 
@@ -419,6 +434,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.figure2.clear()
                 ax = self.figure2.add_subplot()
                 ax.plot(data)
+                ax.plot(rms2)
+                print(startPointArray1)
                 for i in range(len(startPointArray2)):
                     if i % 2 == 1:
                         ax.plot(startPointArray2[i], rms1[i], marker="o", color="r")
@@ -433,6 +450,26 @@ class MainWindow(QtWidgets.QMainWindow):
                 ax = self.figure2.add_subplot()
                 ax.plot(data)
                 self.canvas2.draw()
+    def IMUSaveData(self):
+            # print(saveData)
+        with open(self.storagePathIMU, "w", newline="\n") as csvfile:
+            wr = csv.writer(csvfile)
+            print("Save Data to .CSV")
+            # wr.writerow(saveData[1: index])
+            for word in range(1, len(self.IMU1Data)):
+                if word == 1:
+                    wr.writerow(["IMU Pitch ", "IMU Roll", "IMU Yaw"])
+                wr.writerow([self.IMU1Data[word], self.IMU2Data[word], self.IMU3Data[word]])
+
+    def EMGSaveData(self):
+        with open(self.storagePathEMG, "w", newline="\n") as csvfile:
+            wr = csv.writer(csvfile)
+            print("Save Data to .CSV")
+            # wr.writerow(saveData[1: index])
+            for word in range(1, len(self.EMGData1)):
+                if word == 1:
+                    wr.writerow(["EMG Channel 1 ", "EMG Channel 2"])
+                wr.writerow([self.EMGData1[word], self.EMGData2[word]])
 
 
 if __name__ == '__main__':

@@ -27,15 +27,15 @@ def rms_function(data, window):
 
     return rms
 
-def startPoint(rms, threshold):
+def startPoint(rms, threshold_start, threshold_stop):
     startPointArray = []
     isStart = False
 
     for i in range(len(rms)):
-        if isStart == False and rms[i] > threshold:
+        if isStart == False and rms[i] > threshold_start:
             startIndex = i
             isStart = True
-        elif isStart == True and rms[i] < threshold:
+        elif isStart == True and rms[i] < threshold_stop:
             stopIndex = i
             isStart = False
             startPointArray.append(startIndex)

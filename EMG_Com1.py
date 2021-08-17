@@ -27,13 +27,8 @@ win = pg.GraphicsWindow(title="Signal from Bluetooth")  # create a window
 win.setBackground('w')
 p = win.addPlot(title="Realtime plot")  # create empty space for the plot in the window
 p.setYRange(min=int(Y_range[0]), max=int(Y_range[1]))
-
-# p2 = win.addPlot(title="RMS plot")  # create empty space for the plot in the window
-# p2.setYRange(min=int(Y_range[0]), max=int(Y_range[1]))
 curve = p.plot(pen=pg.mkPen(color='k', width=0.2))
 curve2 = p.plot(pen=pg.mkPen(color='b', width=0.5))
-# create an empty "plot" (a curve to plot)
-# pg.setConfigOption('background', 'w')
 
 windowWidth = 1500
 Xm = linspace(0, 0, 1500)
@@ -41,41 +36,29 @@ Xm = linspace(0, 0, 1500)
 # Xm = linspace(0, 0, 250)         # create array that will contain the relevant time series
 ptr = -windowWidth                       # set first x position
 Value = deque(maxlen=len(Xm))
-saveData = []
+saveData1 = []
+saveData2 = []
 index = 0
 today = date.today()
 d1 = today.strftime("%b-%d-%Y")
 now = datetime.now()
 current_time = now.strftime("%H-%M-%S")
 storagePath = f"{desktop}\\{d1}{current_time}.csv"
-# storagePath = f"C:\\Users\\{d1}{current_time}.csv"
-
-# Realtime data plot.
-# Each time this function is called, the data display is updated
 def update():
     global curve, curve2, ptr, Xm, saveData, index
     value = ser.readline().decode("utf-8", errors = 'ignore')
-    print(value)
-    # saveData.append(value)
     if len(value) > 2:
         value = float(value)
         if int(value / 10000) == 2:
             Xm[:-1] = Xm[1:]
-            # shift data in the temporal mean 1 sample left
-    # value = str(ser.readline(), 'utf-8')
-    # print("my value" + value)
-
-
-    # Raw signal
-    # if value != '\r\n':
-    # if value != '\n':
             if value != '\n':
                 if int(value / 10000) == 2:
                     # print(value % 10000)
                     value = (value % 10000) -1500
                     Xm[-1] = value             # vector containing the instantaneous values
                     # index = index + 1
-                    # saveData.append(value) # saveData all data not only specific channel
+                    saveData1.append(value)
+                    saveData2.append('123')
                     index += 1
                     # print(saveData)
                     ptr += 1  # update x position for displaying the curve
@@ -86,22 +69,14 @@ def update():
                     # curve2.setData(rms)  # set the curve with these data
                     # curve.setPos(ptr, 0)  # set x posiYtion in the graph to 0
                     QtGui.QApplication.processEvents()  # process the plot now
-                    # if index % 500 == 0:
-                    #     with open(storagePath, "w", newline="\n") as csvfile:
-                    #         wr = csv.writer(csvfile)
-                    #         print("Save Data to .CSV")
-                    #         # wr.writerow(saveData[1: index])
-                    #         for word in range(1, len(saveData)):
-                    #             wr.writerow([saveData[word]])
-
-    # # Filtered signal: Median Filter to solve Baseline Wandering.
-    # if value != '\r\n':
-    #     print(value)
-    #     Value.append(float(value))
-    # if Value[-1] != 0:
-    #     for i in range(len(Value)):
-    #         med = np.median(Value)
-    #     Xm[-1] = Value[-1] - med
+                    if index % 500 == 0:
+                        # print(saveData)
+                        with open(storagePath, "w", newline="\n") as csvfile:
+                            wr = csv.writer(csvfile)
+                            print("Save Data to .CSV")
+                            # wr.writerow(saveData[1: index])
+                            for word in range(1, len(saveData1)):
+                                wr.writerow([saveData1[word], saveData2[word]])
 
 
 
