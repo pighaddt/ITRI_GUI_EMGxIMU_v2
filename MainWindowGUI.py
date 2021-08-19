@@ -3,6 +3,7 @@ import os
 import threading
 
 import PyQt5
+import numpy
 import serial
 from PyQt5 import QtWidgets, QtGui, QtCore
 import sys
@@ -255,15 +256,16 @@ class MainWindow(QtWidgets.QMainWindow):
         while self.portNameEMG is not None:
             self.ui.pushButton_StartEMGPlot.setEnabled(False)
             dataEMG = self.serEMG.readline().decode("utf-8", errors="ignore").splitlines()
-            # print(dataEMG)
+            print(dataEMG)
             if len(dataEMG[0]) == 5:
                 dataEMG[0] = int(dataEMG[0])
-                print(dataEMG[0])
+                # print(dataEMG[0])
                 # print(threading.currentThread().getName())
                 if int(dataEMG[0] / 10000) == 1:
                     # self.index1 = self.index1 + 1
                     self.EMGData1[:-1] = self.EMGData1[1:]
-                    dataEMG[0] = (dataEMG[0] % 10000) - 1500
+                    # dataEMG[0] = (dataEMG[0] % 10000) - 1500
+                    dataEMG[0] = (dataEMG[0] % 10000)  #gravity version
                     # print(dataEMG[0])
                     self.EMGData1[-1] = dataEMG[0]             # vector containing the instantaneous values
                     # if self.index1 % 20 == 0:
@@ -273,7 +275,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 elif int(dataEMG[0] / 10000) == 2:
                     # self.index2 = self.index2 + 1
                     self.EMGData2[:-1] = self.EMGData2[1:]
-                    dataEMG[0] = (dataEMG[0] % 10000) - 1500
+                    # dataEMG[0] = (dataEMG[0] % 10000) - 1500
+                    dataEMG[0] = (dataEMG[0] % 10000)
+                    # print(dataEMG[0])
                     self.EMGData2[-1] = dataEMG[0]  # vector containing the instantaneous values
 
             # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
@@ -291,7 +295,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.pushButton_StartIMUPlot.setEnabled(False)
             dataIMU = self.serIMU.readline().decode("utf-8", errors="ignore")
             print(len(dataIMU))
-            print(dataIMU[4:5])
+            # print(dataIMU[4:5])
             if dataIMU[4:5] == 'P':  # verify String Data
                 dataIMU = str(dataIMU)
                 dataIMU = dataIMU[4:-2]
@@ -383,20 +387,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def loadIMU(self):
         filename = self.openFileNameDialog()
-        # print("IMU Filename" + filename)
-        # dataArray = pd.read_csv(filename, skiprows=3, usecols=[5])
-        # data = dataArray.iloc[:, 0]
-        # # beforeMedianFrequency = plotTimeFrequencyDomain(data)
-        # # create an axis
-        # ax = self.figure2.add_subplot(111)
-        #
-        # # discards the old graph
-        # # ax.hold(False) # deprecated, see above
-        #
-        # # plot data
-        # ax.plot(data)
-        # # plt.xticks(range(7), [0, 2000, 4000, 6000, 8000, 10000, 120000])
-        # self.canvas2.draw()
+        print("IMU Filename" + filename)
+        dataArray = pd.read_csv(filename, skiprows=0)
+        data = dataArray.iloc[:, 0]
+        # create an axis
+        ax = self.figure3.add_subplot(111)
+        # plot data
+        ax.plot(data)
+        self.canvas3.draw()
+        maxAngle  = numpy.max(data)
+        self.ui.label_angle.setText("Current Angle : " + str(maxAngle))
+        # print("Max Angle" + str(maxAngle))
 
     def EMGDevice1Click(self):
         global filenameEMG, rms1, startPointArray1
