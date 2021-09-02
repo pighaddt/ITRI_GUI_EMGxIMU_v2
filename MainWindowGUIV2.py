@@ -60,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.EMGIMUDataSetting()
         self.bpsArray = ['4800', '9600', '115200']
         self.initSet()
-        # self.index1 = 0
+        self.IMUindex = 0
         # self.index2 = 0
 
         # Signals that can be emitted
@@ -100,21 +100,24 @@ class MainWindow(QtWidgets.QMainWindow):
     def EMGIMUDataSetting(self):
         self.windowWidth_Device1 = 500
         self.windowWidth_Device2 = 100
-        #Device1 2EMG signal + 1 IMU Signal
+        #Device1 2 EMG signal + 1 IMU Signal
         self.Device1EMG1 = linspace(0, 0, self.windowWidth_Device1)
         self.Device1EMG2= linspace(0, 0, self.windowWidth_Device1)
-        self.Device1IMU1 = linspace(0, 0, self.windowWidth_Device1)  # create array that will contain the relevant time series
+        self.Device1IMUPitch = linspace(0, 0, self.windowWidth_Device1)  # create array that will contain the relevant time series
+        self.Device1IMURoll = linspace(0, 0, self.windowWidth_Device1)  # create array that will contain the relevant time series
+
         #Device2  1 IMU Signal
-        self.Device2IMU2 = linspace(0, 0, self.windowWidth_Device2)  # create array that will contain the relevant time series
-        self.Device2IMU3 = linspace(0, 0, self.windowWidth_Device2)  # create array that will contain the relevant time series
+        
+        self.Device2IMUPitch = linspace(0, 0, self.windowWidth_Device2)  # create array that will contain the relevant time series
+        self.Device2IMURoll = linspace(0, 0, self.windowWidth_Device2)  # create array that will contain the relevant time series
 
 
     def initSet(self):
         for i in range(len(self.bpsArray)):
             self.ui.comboBox_Device1BR.addItem(self.bpsArray[i])
             self.ui.comboBox_Device2BR.addItem(self.bpsArray[i])
-        self.ui.comboBox_Device1BR.setCurrentIndex(3) #Device1 init buad rate 115200
-        self.ui.comboBox_Device2BR.setCurrentIndex(3) #Device2 init buad rate 115200
+        self.ui.comboBox_Device1BR.setCurrentIndex(2) #Device1 init buad rate 115200
+        self.ui.comboBox_Device2BR.setCurrentIndex(2) #Device2 init buad rate 115200
 
     def searchComPort(self):
         self.ui.textEdit_info.setReadOnly(True)
@@ -154,8 +157,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def set_graph2_ui(self):
-        global curve1, curve2, curve3
-        Y_EMG_range = [-3000, 3000]
+        global curve1, curve2, curve3, curve_roll
+        Y_EMG_range = [-2000, 2000]
         Y_IMU_range = [-180, 180]
 
         pg.setConfigOptions(antialias=True)  # pg global variable setting function, antialias=True open curve anti-aliasing
@@ -164,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # pg The drawing window can be added to the graph_layout in the GUI as a widget, and of course can be added to all other Qt containers.
         # self.verticalLayoutWidget.addWidget(win)
         self.ui.verticalLayout.addWidget(win)
-        p1 = win.addPlot(title="Device1 EMG 1 Raw Data")  # Add the first drawing window
+        p1 = win.addPlot(title="Device 1 EMG 1 Raw Data")  # Add the first drawing window
         p1.setLabel('left', text='mV', color='#000000')  # y axis setting function
         p1.showGrid(x=False, y=False)  # Grid setting function
         p1.setLogMode(x=False, y=False)  # False stands for linear axis, True stands for logarithmic axis
@@ -176,7 +179,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         win.nextRow()  # layouts, arranged vertically, without adding this line, the default horizontal arrangement
-        p2 = win.addPlot(title="Device1 EMG 2 Raw Data")
+        p2 = win.addPlot(title="Device 1 EMG 2 Raw Data")
         p2.setLabel('left', text='mV', color='#000000')
         p2.showGrid(x=False, y=False)
         p2.setLogMode(x=False, y=False)
@@ -187,7 +190,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         win.nextRow()  # layouts, arranged vertically, without adding this line, the default horizontal arrangement
-        p3 = win.addPlot(title="Device1 IMU 1 Raw Data")
+        p3 = win.addPlot(title="Device 1 IMU 1 Raw Data")
         p3.setLabel('left', text='angle', color='#000000')
         p3.showGrid(x=False, y=False)
         p3.setLogMode(x=False, y=False)
@@ -195,6 +198,7 @@ class MainWindow(QtWidgets.QMainWindow):
         p3.setYRange(min=int(Y_IMU_range[0]), max=int(Y_IMU_range[1]))
         p3.addLegend()
         curve3 = p3.plot(pen=pg.mkPen(color='b', width=2.0), name="IMU 1 Pitch")  ##pitch EMG
+        curve_roll = p3.plot(pen=pg.mkPen(color='r', width=2.0), name="IMU 1 Roll")  ##roll curve
 
         return p1, p2, p3
 
@@ -208,7 +212,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # pg The drawing window can be added to the graph_layout in the GUI as a widget, and of course can be added to all other Qt containers.
         # self.verticalLayoutWidget.addWidget(win)
         self.ui.verticalLayout_2.addWidget(win)
-        p4 = win.addPlot(title="Device2 IMU 2 Raw Data")  # Add the first drawing window
+        p4 = win.addPlot(title="Device 2 IMU 2 Raw Data")  # Add the first drawing window
         p4.setLabel('left', text='mV', color='#000000')  # y axis setting function
         p4.showGrid(x=False, y=False)  # Grid setting function
         p4.setLogMode(x=False, y=False)  # False stands for linear axis, True stands for logarithmic axis
@@ -221,7 +225,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         win.nextRow()  # layouts, arranged vertically, without adding this line, the default horizontal arrangement
         # Y_IMU_range = [-180, 180]
-        p5 = win.addPlot(title="EMG Raw Data")
+        p5 = win.addPlot(title="Device 2 IMU 3 Raw Data")
         p5.setLabel('left', text='mV', color='#000000')
         p5.showGrid(x=False, y=False)
         p5.setLogMode(x=False, y=False)
@@ -247,31 +251,60 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.pushButton_StartDevice1Plot.setEnabled(False)
             dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore").splitlines()
             print(dataDevice1)
-            if len(dataDevice1[0]) == 5:
-                dataDevice1[0] = int(dataDevice1[0])
-                # print(dataEMG[0])
-                if int(dataDevice1[0] / 10000) == 1:
-                    # self.index1 = self.index1 + 1
-                    self.Device1EMG1[:-1] = self.Device1EMG1[1:]
-                    # dataEMG[0] = (dataEMG[0] % 10000) - 1500
-                    dataDevice1[0] = (dataDevice1[0] % 10000)  #gravity version
-                    # print(dataEMG[0])
-                    self.Device1EMG1[-1] = dataDevice1[0]             # vector containing the instantaneous values
-                    # if self.index1 % 20 == 0:
-                    # curve5.setData(self.EMGData1)  # set the curve with these data
-                    # QApplication.processEvents()  # process the plot now
-                    # self.index1 = 0
-                elif int(dataDevice1[0] / 10000) == 2:
-                    # self.index2 = self.index2 + 1
-                    self.Device1EMG2[:-1] = self.Device1EMG2[1:]
-                    # dataEMG[0] = (dataEMG[0] % 10000) - 1500
-                    dataDevice1[0] = (dataDevice1[0] % 10000)
-                    # print(dataEMG[0])
-                    self.Device1EMG2[-1] = dataDevice1[0]  # vector containing the instantaneous values
+            if len(dataDevice1) != 0:
+                if len(dataDevice1[0]) == 5:
+                    dataStr = dataDevice1[0]
+                    dataStr = str(dataStr)
+                    # print(dataStr)
+                    if dataStr[0] == '1':
+                        self.Device1EMG1[:-1] = self.Device1EMG1[1:]
+                        self.Device1EMG1[-1] = int(dataStr[1:5]) - 1500
+                        # print(str(int(dataStr[1:5]) - 1500))
+                        self.IMUindex = self.IMUindex + 1
+                        if self.IMUindex % 5 != 0:
+                            self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
+                            self.Device1IMUPitch[-1] = int(self.Device1IMUPitch[-2])
 
-            # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
-            self.signalComm.request_Device1graph_update.emit()
-        print(" successful pause")
+                            self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
+                            self.Device1IMURoll[-1] = int(self.Device1IMURoll[-2])
+                    elif dataStr[0] == '2':
+                        self.Device1EMG2[:-1] = self.Device1EMG2[1:]
+                        self.Device1EMG2[-1] = int(dataStr[1:5]) - 1500
+
+                        # self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
+                        # self.Device1IMUPitch[-1] = int(self.Device1IMUPitch[-2])
+                        #
+                        # self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
+                        # self.Device1IMURoll[-1] = int(self.Device1IMURoll[-2])
+                    elif dataStr[0] == '3':
+                        self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
+                        self.Device1IMUPitch[-1] = int(dataStr[1:5])
+                        # print(dataStr[1:4])
+                    elif dataStr[0] == '4':
+                        self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
+                        self.Device1IMURoll[-1] = int(dataStr[1:5])
+                    # if int(dataDevice1[0] / 10000) == 1:
+                    #     # self.index1 = self.index1 + 1
+                    #     self.Device1EMG1[:-1] = self.Device1EMG1[1:]
+                    #     # dataEMG[0] = (dataEMG[0] % 10000) - 1500
+                    #     dataDevice1[0] = (dataDevice1[0] % 10000)  #gravity version
+                    #     # print(dataEMG[0])
+                    #     self.Device1EMG1[-1] = dataDevice1[0]             # vector containing the instantaneous values
+                    #     # if self.index1 % 20 == 0:
+                    #     # curve5.setData(self.EMGData1)  # set the curve with these data
+                    #     # QApplication.processEvents()  # process the plot now
+                    #     # self.index1 = 0
+                    # elif int(dataDevice1[0] / 10000) == 2:
+                    #     # self.index2 = self.index2 + 1
+                    #     self.Device1EMG2[:-1] = self.Device1EMG2[1:]
+                    #     # dataEMG[0] = (dataEMG[0] % 10000) - 1500
+                    #     dataDevice1[0] = (dataDevice1[0] % 10000)
+                    #     # print(dataEMG[0])
+                    #     self.Device1EMG2[-1] = dataDevice1[0]  # vector containing the instantaneous values
+                        # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
+                        self.signalComm.request_Device1graph_update.emit()
+
+            # print(" successful pause")
 
 
     def start_Device2plot(self):
@@ -291,13 +324,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 pitchStr = splitData[0]
                 rollStr = splitData[1]
                 yawStr = splitData[2]
-                self.Device1IMU1[:-1] = self.Device1IMU1[1:]  # shift pitch data in the temporal mean 1 sample left
-                self.Device2IMU2[:-1] = self.Device2IMU2[1:]  # shift roll data in the temporal mean 1 sample left
-                self.Device2IMU3[:-1] = self.Device2IMU3[1:]  # shift roll data in the temporal mean 1 sample left
+                self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]  # shift pitch data in the temporal mean 1 sample left
+                self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]  # shift roll data in the temporal mean 1 sample left
+                self.Device2IMUPitch[:-1] = self.Device2IMUPitch[1:]  # shift roll data in the temporal mean 1 sample left
+                self.Device2IMURoll[:-1] = self.Device2IMURoll[1:]  # shift roll data in the temporal mean 1 sample left
 
-                self.Device1IMU1[-1] = float(pitchStr[2:])  # pitchStr : R= pitch
-                self.Device2IMU2[-1] = float(rollStr[2:])  # vector containing the instantaneous values
-                self.Device2IMU3[-1] = float(yawStr[2:])  # vector containing the instantaneous values
+                self.Device1IMUPitch[-1] = float(pitchStr[2:])  # pitchStr : R= pitch
+                self.Device1IMURoll[-1] = float(rollStr[2:])  # vector containing the instantaneous values
+                self.Device2IMUPitch[-1] = float(yawStr[2:])  # vector containing the instantaneous values
+                self.Device2IMURoll[-1] = float(yawStr[2:])  # vector containing the instantaneous values
                 # print(splitData)
 
             # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
@@ -319,17 +354,18 @@ class MainWindow(QtWidgets.QMainWindow):
         print("ploting stop")
 
     def update_Device1graph(self):
-        global curve1, curve2, curve3
+        global curve1, curve2, curve3, curve_roll
         # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
         curve1.setData(self.Device1EMG1)
         curve2.setData(self.Device1EMG2)
-        curve3.setData(self.Device1IMU1)
+        curve3.setData(self.Device1IMUPitch)
+        curve_roll.setData(self.Device1IMURoll)
 
     def update_Device2graph(self):
         global curve4, curve5
         # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
-        curve4.setData(self.Device2IMU2)
-        curve5.setData(self.Device2IMU3)
+        curve4.setData(self.Device2IMUPitch)
+        curve5.setData(self.Device2IMURoll)
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()
@@ -344,15 +380,18 @@ class MainWindow(QtWidgets.QMainWindow):
         global filenameDevice1, startPointArray1, startPointArray2, rms1, rms2
         filenameDevice1 = self.openFileNameDialog()
         print("EMG Filename" + filenameDevice1)
-        dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[3, 4])
+        dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[0,1,2,3])
         data1 = dataArray.iloc[:, 0]
         data2 = dataArray.iloc[:, 1]
+        data3 = dataArray.iloc[:, 2]
         # beforeMedianFrequency = plotTimeFrequencyDomain(data)
         # create an axis
         rms1 = RMSDetect.rms_function(data1, 10)
         rms2 = RMSDetect.rms_function(data2, 10)
-        startPointArray1 = RMSDetect.startPoint(rms1, 300, 50)
-        startPointArray2 = RMSDetect.startPoint(rms2, 300, 50)
+        startPointArray1 = RMSDetect.startPoint(rms1, 600, 400) #gravity EMG
+        # print(rms1)
+        # print(startPointArray1)
+        startPointArray2 = RMSDetect.startPoint(rms2, 600, 400)
         self.figure1.clear()
         ax = self.figure1.add_subplot()
 
@@ -366,6 +405,15 @@ class MainWindow(QtWidgets.QMainWindow):
         # plot data
         ax.plot(data2)
         self.canvas2.draw()
+
+        self.figure3.clear()
+        ax = self.figure3.add_subplot()
+
+        # plot data
+        ax.plot(data3)
+        self.canvas3.draw()
+        maxAngle = numpy.max(data3)
+        self.ui.label_angle.setText("Current Angle : " + str(maxAngle))
 
     def loadDevice2(self):
         filename = self.openFileNameDialog()
@@ -386,12 +434,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if filenameDevice1 is not None:
             #RMS Detect Function start
             if self.ui.checkBox_EMGDevice1.isChecked():
-                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[3])
+                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[0, 1, 2, 3])
                 data = dataArray.iloc[:, 0]
                 self.figure1.clear()
                 ax = self.figure1.add_subplot()
                 ax.plot(data)
-                ax.plot(rms1)
+                # ax.plot(rms1)
                 for i in range(len(startPointArray1)):
                     if i%2 == 1:
                         ax.plot(startPointArray1[i], rms1[i], marker="o", color="r")
@@ -400,7 +448,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.canvas1.draw()
 
             else:
-                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[3])
+                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[0, 1, 2, 3])
                 data = dataArray.iloc[:, 0]
                 self.figure1.clear()
                 ax = self.figure1.add_subplot()
@@ -412,8 +460,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if filenameDevice1 is not None:
             # RMS Detect Function start
             if self.ui.checkBox_EMGDevice2.isChecked():
-                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[4])
-                data = dataArray.iloc[:, 0]
+                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[0, 1, 2, 3])
+                data = dataArray.iloc[:, 1]
                 self.figure2.clear()
                 ax = self.figure2.add_subplot()
                 ax.plot(data)
@@ -427,8 +475,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.canvas2.draw()
 
             else:
-                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[4])
-                data = dataArray.iloc[:, 0]
+                dataArray = pd.read_csv(filenameDevice1, skiprows=3, usecols=[0, 1, 2, 3])
+                data = dataArray.iloc[:, 1]
                 self.figure2.clear()
                 ax = self.figure2.add_subplot()
                 ax.plot(data)
@@ -440,18 +488,18 @@ class MainWindow(QtWidgets.QMainWindow):
             print("Save Device1 Data to .CSV")
             for word in range(1, len(self.Device1EMG1)):
                 if word == 1:
-                    wr.writerow(["EMG Channel 1 ", "EMG Channel 2"])
-                wr.writerow([self.Device1EMG1[word], self.Device1EMG2[word]])
+                    wr.writerow(["EMG Channel 1 ", "EMG Channel 2", "IMU 1 Pitch", "IMU 1 Roll"])
+                wr.writerow([self.Device1EMG1[word], self.Device1EMG2[word], self.Device1IMUPitch[word], self.Device1IMURoll[word]])
 
     def Device2SaveData(self):
         with open(self.storagePathDevice2, "w", newline="\n") as csvfile:
             wr = csv.writer(csvfile)
             print("Save Device2 Data to .CSV")
-            for word in range(1, len(self.Device2IMU2)):
+            for word in range(1, len(self.Device1IMURoll)):
                 if word == 1:
                     wr.writerow(["IMU Pitch ", "IMU Roll", "IMU Yaw"])
-                # wr.writerow([self.Device2IMU2[word], self.Device2IMU3[word], self.Device2IMU2[word]])
-                wr.writerow([self.Device2IMU2[word], self.Device2IMU3[word]])
+                # wr.writerow([self.Device1IMURoll[word], self.Device2IMUPitch[word], self.Device1IMURoll[word]])
+                wr.writerow([self.Device2IMUPitch[word], self.Device2IMURoll[word]])
 
 
 
