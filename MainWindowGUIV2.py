@@ -99,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def EMGIMUDataSetting(self):
         self.windowWidth_Device1 = 500
-        self.windowWidth_Device2 = 100
+        self.windowWidth_Device2 = 300
         #Device1 2 EMG signal + 1 IMU Signal
         self.Device1EMG1 = linspace(0, 0, self.windowWidth_Device1)
         self.Device1EMG2= linspace(0, 0, self.windowWidth_Device1)
@@ -283,57 +283,29 @@ class MainWindow(QtWidgets.QMainWindow):
                     elif dataStr[0] == '4':
                         self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
                         self.Device1IMURoll[-1] = int(dataStr[1:5])
-                    # if int(dataDevice1[0] / 10000) == 1:
-                    #     # self.index1 = self.index1 + 1
-                    #     self.Device1EMG1[:-1] = self.Device1EMG1[1:]
-                    #     # dataEMG[0] = (dataEMG[0] % 10000) - 1500
-                    #     dataDevice1[0] = (dataDevice1[0] % 10000)  #gravity version
-                    #     # print(dataEMG[0])
-                    #     self.Device1EMG1[-1] = dataDevice1[0]             # vector containing the instantaneous values
-                    #     # if self.index1 % 20 == 0:
-                    #     # curve5.setData(self.EMGData1)  # set the curve with these data
-                    #     # QApplication.processEvents()  # process the plot now
-                    #     # self.index1 = 0
-                    # elif int(dataDevice1[0] / 10000) == 2:
-                    #     # self.index2 = self.index2 + 1
-                    #     self.Device1EMG2[:-1] = self.Device1EMG2[1:]
-                    #     # dataEMG[0] = (dataEMG[0] % 10000) - 1500
-                    #     dataDevice1[0] = (dataDevice1[0] % 10000)
-                    #     # print(dataEMG[0])
-                    #     self.Device1EMG2[-1] = dataDevice1[0]  # vector containing the instantaneous values
                         # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
                         self.signalComm.request_Device1graph_update.emit()
-
-            # print(" successful pause")
+            print(" successful pause")
 
 
     def start_Device2plot(self):
         self.portNameDevice2 = self.ui.comboBox_Device2CP.currentText()
 
         while self.portNameDevice2 is not None:
-            self.ui.pushButton_StartDevice2Plot.setEnabled(False)
-            dataDevice2 = self.serDevice2.readline().decode("utf-8", errors="ignore")
-            print(len(dataDevice2))
-            # print(dataIMU[4:5])
-            if dataDevice2[4:5] == 'P':  # verify String Data
-                dataDevice2 = str(dataDevice2)
-                dataDevice2 = dataDevice2[4:-2]
-                # print("dataIMU" + dataIMU)
-                splitData = dataDevice2.split(',')
-                # print(splitData)
-                pitchStr = splitData[0]
-                rollStr = splitData[1]
-                yawStr = splitData[2]
-                self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]  # shift pitch data in the temporal mean 1 sample left
-                self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]  # shift roll data in the temporal mean 1 sample left
-                self.Device2IMUPitch[:-1] = self.Device2IMUPitch[1:]  # shift roll data in the temporal mean 1 sample left
-                self.Device2IMURoll[:-1] = self.Device2IMURoll[1:]  # shift roll data in the temporal mean 1 sample left
-
-                self.Device1IMUPitch[-1] = float(pitchStr[2:])  # pitchStr : R= pitch
-                self.Device1IMURoll[-1] = float(rollStr[2:])  # vector containing the instantaneous values
-                self.Device2IMUPitch[-1] = float(yawStr[2:])  # vector containing the instantaneous values
-                self.Device2IMURoll[-1] = float(yawStr[2:])  # vector containing the instantaneous values
-                # print(splitData)
+            self.ui.pushButton_StartDevice1Plot.setEnabled(False)
+            dataDevice2 = self.serDevice2.readline().decode("utf-8", errors="ignore").splitlines()
+            print(dataDevice2)
+            if len(dataDevice2) != 0:
+                if len(dataDevice2[0]) == 5:
+                    dataStr = dataDevice2[0]
+                    dataStr = str(dataStr)
+                    # print(dataStr)
+                    if dataStr[0] == '5':
+                        self.Device2IMUPitch[:-1] = self.Device2IMUPitch[1:]
+                        self.Device2IMUPitch[-1] = int(dataStr[1:5])
+                    elif dataStr[0] == '6':
+                        self.Device2IMURoll[:-1] = self.Device2IMURoll[1:]
+                        self.Device2IMURoll[-1] = int(dataStr[1:5])
 
             # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
             self.signalComm.request_Device2graph_update.emit()
@@ -495,9 +467,9 @@ class MainWindow(QtWidgets.QMainWindow):
         with open(self.storagePathDevice2, "w", newline="\n") as csvfile:
             wr = csv.writer(csvfile)
             print("Save Device2 Data to .CSV")
-            for word in range(1, len(self.Device1IMURoll)):
+            for word in range(1, len(self.Device2IMUPitch)):
                 if word == 1:
-                    wr.writerow(["IMU Pitch ", "IMU Roll", "IMU Yaw"])
+                    wr.writerow(["IMU Pitch ", "IMU Roll"])
                 # wr.writerow([self.Device1IMURoll[word], self.Device2IMUPitch[word], self.Device1IMURoll[word]])
                 wr.writerow([self.Device2IMUPitch[word], self.Device2IMURoll[word]])
 
