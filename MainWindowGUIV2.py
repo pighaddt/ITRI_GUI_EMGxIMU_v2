@@ -190,7 +190,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         win.nextRow()  # layouts, arranged vertically, without adding this line, the default horizontal arrangement
-        p3 = win.addPlot(title="Device 1 IMU 1 Raw Data")
+        p3 = win.addPlot(title="Device 2 IMU 2 Raw Data")
         p3.setLabel('left', text='angle', color='#000000')
         p3.showGrid(x=False, y=False)
         p3.setLogMode(x=False, y=False)
@@ -221,7 +221,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # p5.setXRange(0, 1000) # bigger than 1000 will use k units
         p4.addLegend()  # Select whether to add legend
 
-        curve4 = p4.plot(pen=pg.mkPen(color='k', width=2.0), name="IMU 1 Roll")  ##pitch EMG
+        curve4 = p4.plot(pen=pg.mkPen(color='k', width=2.0), name="IMU 1 Pitch")  ##pitch EMG
 
         win.nextRow()  # layouts, arranged vertically, without adding this line, the default horizontal arrangement
         # Y_IMU_range = [-180, 180]
@@ -232,7 +232,7 @@ class MainWindow(QtWidgets.QMainWindow):
         p5.setLabel('bottom', text='points', color='#000000', units='s')
         p5.setYRange(min=int(Y_IMU_range[0]), max=int(Y_IMU_range[1]))
         p5.addLegend()
-        curve5 = p5.plot(pen=pg.mkPen(color='r', width=2.0), name="IMU 1 Yaw")  ##pitch EMG
+        curve5 = p5.plot(pen=pg.mkPen(color='r', width=2.0), name="IMU 1 Roll")  ##pitch EMG
 
         return p4, p5
 
@@ -292,7 +292,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.portNameDevice2 = self.ui.comboBox_Device2CP.currentText()
 
         while self.portNameDevice2 is not None:
-            self.ui.pushButton_StartDevice1Plot.setEnabled(False)
+            self.ui.pushButton_StartDevice2Plot.setEnabled(False)
             dataDevice2 = self.serDevice2.readline().decode("utf-8", errors="ignore").splitlines()
             print(dataDevice2)
             if len(dataDevice2) != 0:
@@ -330,8 +330,10 @@ class MainWindow(QtWidgets.QMainWindow):
         # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
         curve1.setData(self.Device1EMG1)
         curve2.setData(self.Device1EMG2)
-        curve3.setData(self.Device1IMUPitch)
-        curve_roll.setData(self.Device1IMURoll)
+        # curve3.setData(self.Device1IMUPitch)
+        # curve_roll.setData(self.Device1IMURoll)
+        curve3.setData(self.Device2IMUPitch)
+        curve_roll.setData(self.Device2IMURoll)
 
     def update_Device2graph(self):
         global curve4, curve5
