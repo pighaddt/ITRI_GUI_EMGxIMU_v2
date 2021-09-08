@@ -12,7 +12,7 @@ from datetime import date
 from datetime import datetime
 # Create object serial port
 
-portName = "COM12"
+portName = "COM10"
 baudRate = 115200
 R = 30
 Y_range = [-2500, 2500]

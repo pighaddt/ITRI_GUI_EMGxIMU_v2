@@ -99,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def EMGIMUDataSetting(self):
         self.windowWidth_Device1 = 500
-        self.windowWidth_Device2 = 300
+        self.windowWidth_Device2 = 500
         #Device1 2 EMG signal + 1 IMU Signal
         self.Device1EMG1 = linspace(0, 0, self.windowWidth_Device1)
         self.Device1EMG2= linspace(0, 0, self.windowWidth_Device1)
@@ -250,7 +250,7 @@ class MainWindow(QtWidgets.QMainWindow):
         while self.portNameDevice1 is not None:
             self.ui.pushButton_StartDevice1Plot.setEnabled(False)
             dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore").splitlines()
-            print(dataDevice1)
+            # print(dataDevice1)
             if len(dataDevice1) != 0:
                 if len(dataDevice1[0]) == 5:
                     dataStr = dataDevice1[0]
@@ -267,6 +267,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
                             self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
                             self.Device1IMURoll[-1] = int(self.Device1IMURoll[-2])
+
+                            # self.Device2IMUPitch[:-1] = self.Device2IMUPitch[1:]
+                            # self.Device2IMUPitch[-1] = int(self.Device2IMUPitch[-2])
+                            #
+                            # self.Device2IMURoll[:-1] = self.Device2IMURoll[1:]
+                            # self.Device2IMURoll[-1] = int(self.Device2IMURoll[-2])
                     elif dataStr[0] == '2':
                         self.Device1EMG2[:-1] = self.Device1EMG2[1:]
                         self.Device1EMG2[-1] = int(dataStr[1:5]) - 1500
@@ -285,7 +291,7 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.Device1IMURoll[-1] = int(dataStr[1:5])
                         # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
                         self.signalComm.request_Device1graph_update.emit()
-            print(" successful pause")
+            # print(" successful pause")
 
 
     def start_Device2plot(self):
@@ -309,7 +315,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
             self.signalComm.request_Device2graph_update.emit()
-        print(" successful pause")
+        # print(" successful pause")
 
 
 
@@ -338,8 +344,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_Device2graph(self):
         global curve4, curve5
         # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
-        curve4.setData(self.Device2IMUPitch)
-        curve5.setData(self.Device2IMURoll)
+        curve4.setData(self.Device1IMUPitch)
+        curve5.setData(self.Device1IMURoll)
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()
