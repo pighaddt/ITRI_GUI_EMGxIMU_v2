@@ -147,6 +147,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.comPortDevice1 = self.ui.comboBox_Device1CP.currentText()
         self.baudRateDevice1 = self.ui.comboBox_Device1BR.currentText()
         self.serDevice1 = serial.Serial(self.comPortDevice1, int(self.baudRateDevice1), timeout=1, parity=serial.PARITY_NONE, stopbits=1)
+        # self.serDevice1.flushInput()
         self.ui.textEdit_info.append(" Device 1 Connecting to {}...".format(str(self.comPortDevice1)))
 
     def connectDevice2SP(self):
@@ -249,8 +250,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         while self.portNameDevice1 is not None:
             self.ui.pushButton_StartDevice1Plot.setEnabled(False)
+            print("before Read" , self.serDevice1.in_waiting)
             dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore").splitlines()
-            # print(dataDevice1)
+            print(dataDevice1)
             if len(dataDevice1) != 0:
                 if len(dataDevice1[0]) == 5:
                     dataStr = dataDevice1[0]
@@ -277,21 +279,16 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.Device1EMG2[:-1] = self.Device1EMG2[1:]
                         self.Device1EMG2[-1] = int(dataStr[1:5]) - 1500
 
-                        # self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
-                        # self.Device1IMUPitch[-1] = int(self.Device1IMUPitch[-2])
-                        #
-                        # self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
-                        # self.Device1IMURoll[-1] = int(self.Device1IMURoll[-2])
                     elif dataStr[0] == '3':
                         self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
                         self.Device1IMUPitch[-1] = int(dataStr[1:5])
-                        # print(dataStr[1:4])
+
                     elif dataStr[0] == '4':
                         self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
                         self.Device1IMURoll[-1] = int(dataStr[1:5])
-                        # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
-                        self.signalComm.request_Device1graph_update.emit()
-            # print(" successful pause")
+                # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
+                self.signalComm.request_Device1graph_update.emit()
+                # print(" successful pause")
 
 
     def start_Device2plot(self):
@@ -336,16 +333,16 @@ class MainWindow(QtWidgets.QMainWindow):
         # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
         curve1.setData(self.Device1EMG1)
         curve2.setData(self.Device1EMG2)
-        # curve3.setData(self.Device1IMUPitch)
-        # curve_roll.setData(self.Device1IMURoll)
-        curve3.setData(self.Device2IMUPitch)
-        curve_roll.setData(self.Device2IMURoll)
+        curve3.setData(self.Device1IMUPitch)
+        curve_roll.setData(self.Device1IMURoll)
+        # curve3.setData(self.Device2IMUPitch)
+        # curve_roll.setData(self.Device2IMURoll)
 
     def update_Device2graph(self):
         global curve4, curve5
         # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
-        curve4.setData(self.Device1IMUPitch)
-        curve5.setData(self.Device1IMURoll)
+        curve4.setData(self.Device2IMUPitch)
+        curve5.setData(self.Device2IMUPitch)
 
     def openFileNameDialog(self):
         options = QFileDialog.Options()
