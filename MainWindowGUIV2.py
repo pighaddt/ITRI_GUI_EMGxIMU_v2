@@ -250,7 +250,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         while self.portNameDevice1 is not None:
             self.ui.pushButton_StartDevice1Plot.setEnabled(False)
-            print("before Read" , self.serDevice1.in_waiting)
+            # print("before Read" , self.serDevice1.in_waiting)
             dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore").splitlines()
             print(dataDevice1)
             if len(dataDevice1) != 0:
@@ -286,8 +286,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     elif dataStr[0] == '4':
                         self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
                         self.Device1IMURoll[-1] = int(dataStr[1:5])
-                # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
-                self.signalComm.request_Device1graph_update.emit()
+
+                    if self.IMUindex % 10 ==0:
+                        # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
+                        self.signalComm.request_Device1graph_update.emit()
                 # print(" successful pause")
 
 
