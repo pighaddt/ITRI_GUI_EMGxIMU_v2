@@ -98,6 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
         matplotlib.rcParams.update({'font.size': 8})
 
     def EMGIMUDataSetting(self):
+        self.DefaultAngle = 50
         self.windowWidth_Device1 = 500
         self.windowWidth_Device2 = 500
         #Device1 2 EMG signal + 1 IMU Signal
@@ -105,7 +106,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.Device1EMG2= linspace(0, 0, self.windowWidth_Device1)
         self.Device1IMUPitch = linspace(0, 0, self.windowWidth_Device1)  # create array that will contain the relevant time series
         self.Device1IMURoll = linspace(0, 0, self.windowWidth_Device1)  # create array that will contain the relevant time series
-
+        self.DeviceAnle = linspace(0,0, self.windowWidth_Device1)
         #Device2  1 IMU Signal
         
         self.Device2IMUPitch = linspace(0, 0, self.windowWidth_Device2)  # create array that will contain the relevant time series
@@ -158,7 +159,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def set_graph2_ui(self):
-        global curve1, curve2, curve3, curve_roll
+        global curve1, curve2, curve3, curve_roll, curve_angle
         Y_EMG_range = [-2000, 2000]
         Y_IMU_range = [-180, 180]
 
@@ -196,10 +197,14 @@ class MainWindow(QtWidgets.QMainWindow):
         p3.showGrid(x=False, y=False)
         p3.setLogMode(x=False, y=False)
         p3.setLabel('bottom', text='points', color='#000000', units='s')
-        p3.setYRange(min=int(Y_IMU_range[0]), max=int(Y_IMU_range[1]))
+        #pitch and roll
+        # p3.setYRange(min=int(Y_IMU_range[0]), max=int(Y_IMU_range[1]))
+        #angle Device1 and Device2
+        p3.setYRange(min=int(0), max=int(200))
         p3.addLegend()
         curve3 = p3.plot(pen=pg.mkPen(color='b', width=2.0), name="IMU 1 Pitch")  ##pitch EMG
         curve_roll = p3.plot(pen=pg.mkPen(color='r', width=2.0), name="IMU 1 Roll")  ##roll curve
+        curve_angle = p3.plot(pen=pg.mkPen(color='g', width=3.0), name="IMU Angle")  ##angle curve
 
         return p1, p2, p3
 
@@ -282,12 +287,17 @@ class MainWindow(QtWidgets.QMainWindow):
                     elif dataStr[0] == '3':
                         self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
                         self.Device1IMUPitch[-1] = int(dataStr[1:5])
+                        # print(int(dataStr[1:5]))
+
+                        self.DeviceAnle[:-1] = self.DeviceAnle[1:]
+                        self.DeviceAnle[-1] = int(180 - self.DefaultAngle - int(dataStr[1:5]))
+                        print(int(180 - self.DefaultAngle - int(dataStr[1:5])))
 
                     elif dataStr[0] == '4':
                         self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
                         self.Device1IMURoll[-1] = int(dataStr[1:5])
 
-                    if self.IMUindex % 10 ==0:
+                    if self.IMUindex % 5 ==0:
                         # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
                         self.signalComm.request_Device1graph_update.emit()
                 # print(" successful pause")
@@ -331,12 +341,13 @@ class MainWindow(QtWidgets.QMainWindow):
         print("ploting stop")
 
     def update_Device1graph(self):
-        global curve1, curve2, curve3, curve_roll
+        global curve1, curve2, curve3, curve_roll, curve_angle
         # print('Thread ={} Function = update_graph()'.format(threading.currentThread().getName()))
         curve1.setData(self.Device1EMG1)
         curve2.setData(self.Device1EMG2)
-        curve3.setData(self.Device1IMUPitch)
-        curve_roll.setData(self.Device1IMURoll)
+        # curve3.setData(self.Device1IMUPitch)
+        # curve_roll.setData(self.Device1IMURoll)
+        curve_angle.setData(self.DeviceAnle)
         # curve3.setData(self.Device2IMUPitch)
         # curve_roll.setData(self.Device2IMURoll)
 
