@@ -12,7 +12,7 @@ from datetime import date
 from datetime import datetime
 # Create object serial port
 
-portName = "COM4"
+portName = "COM10"
 baudRate = 115200
 R = 30
 Y_range = [-2500, 2500]
@@ -47,37 +47,38 @@ storagePath = f"{desktop}\\{d1}{current_time}.csv"
 def update():
     global curve, curve2, ptr, Xm, saveData, index
     value = ser.readline().decode("utf-8", errors = 'ignore')
-    print(value)
-    if len(value) > 2:
-        value = float(value)
-        if int(value / 10000) == 1:
-            Xm[:-1] = Xm[1:]
-            if value != '\n':
-                if int(value / 10000) == 1:
-                    # print(value % 10000)
-                    value = (value % 10000)
-                    Xm[-1] = value             # vector containing the instantaneous values
-                    # index = index + 1
-                    saveData1.append(value)
-                    saveData2.append('123')
-                    index += 1
-                    # print(saveData)
-                    ptr += 1  # update x position for displaying the curve
-                    curve.setData(Xm)  # set the curve with these data
-                    # rms = rms_function(Xm, 50)
-                    # print( int(rms[-1]))
-                    # myRMS = int(rms[-1])
-                    # curve2.setData(rms)  # set the curve with these data
-                    # curve.setPos(ptr, 0)  # set x posiYtion in the graph to 0
-                    QtGui.QApplication.processEvents()  # process the plot now
-                    # if index % 500 == 0:
-                    #     # print(saveData)
-                    #     with open(storagePath, "w", newline="\n") as csvfile:
-                    #         wr = csv.writer(csvfile)
-                    #         print("Save Data to .CSV")
-                    #         # wr.writerow(saveData[1: index])
-                    #         for word in range(1, len(saveData1)):
-                    #             wr.writerow([saveData1[word], saveData2[word]])
+    if value[0] == '3':
+        print(value)
+    # if len(value) > 2:
+    #     value = float(value)
+    #     if int(value / 10000) == 1:
+    #         Xm[:-1] = Xm[1:]
+    #         if value != '\n':
+    #             if int(value / 10000) == 1:
+    #                 # print(value % 10000)
+    #                 value = (value % 10000)
+    #                 Xm[-1] = value             # vector containing the instantaneous values
+    #                 # index = index + 1
+    #                 saveData1.append(value)
+    #                 # saveData2.append('123')
+    #                 index += 1
+    #                 # print(saveData)
+    #                 ptr += 1  # update x position for displaying the curve
+    #                 curve.setData(Xm)  # set the curve with these data
+    #                 # rms = rms_function(Xm, 50)
+    #                 # print( int(rms[-1]))
+    #                 # myRMS = int(rms[-1])
+    #                 # curve2.setData(rms)  # set the curve with these data
+    #                 # curve.setPos(ptr, 0)  # set x posiYtion in the graph to 0
+    #                 QtGui.QApplication.processEvents()  # process the plot now
+    #                 # if index % 500 == 0:
+    #                 #     # print(saveData)
+    #                 #     with open(storagePath, "w", newline="\n") as csvfile:
+    #                 #         wr = csv.writer(csvfile)
+    #                 #         print("Save Data to .CSV")
+    #                 #         # wr.writerow(saveData[1: index])
+    #                 #         for word in range(1, len(saveData1)):
+    #                 #             wr.writerow([saveData1[word], saveData2[word]])
 
 
 

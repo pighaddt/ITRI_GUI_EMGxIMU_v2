@@ -98,7 +98,7 @@ class MainWindow(QtWidgets.QMainWindow):
         matplotlib.rcParams.update({'font.size': 8})
 
     def EMGIMUDataSetting(self):
-        self.DefaultAngle = 50
+        self.DefaultAngle = 60
         self.windowWidth_Device1 = 500
         self.windowWidth_Device2 = 500
         #Device1 2 EMG signal + 1 IMU Signal
@@ -256,50 +256,54 @@ class MainWindow(QtWidgets.QMainWindow):
         while self.portNameDevice1 is not None:
             self.ui.pushButton_StartDevice1Plot.setEnabled(False)
             # print("before Read" , self.serDevice1.in_waiting)
-            dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore").splitlines()
+            dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore")
             print(dataDevice1)
-            if len(dataDevice1) != 0:
-                if len(dataDevice1[0]) == 5:
-                    dataStr = dataDevice1[0]
-                    dataStr = str(dataStr)
-                    # print(dataStr)
-                    if dataStr[0] == '1':
-                        self.Device1EMG1[:-1] = self.Device1EMG1[1:]
-                        self.Device1EMG1[-1] = int(dataStr[1:5]) - 1500
-                        # print(str(int(dataStr[1:5]) - 1500))
-                        self.IMUindex = self.IMUindex + 1
-                        if self.IMUindex % 5 != 0:
-                            self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
-                            self.Device1IMUPitch[-1] = int(self.Device1IMUPitch[-2])
-
-                            self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
-                            self.Device1IMURoll[-1] = int(self.Device1IMURoll[-2])
-
-                            # self.Device2IMUPitch[:-1] = self.Device2IMUPitch[1:]
-                            # self.Device2IMUPitch[-1] = int(self.Device2IMUPitch[-2])
-                            #
-                            # self.Device2IMURoll[:-1] = self.Device2IMURoll[1:]
-                            # self.Device2IMURoll[-1] = int(self.Device2IMURoll[-2])
-                    elif dataStr[0] == '2':
-                        self.Device1EMG2[:-1] = self.Device1EMG2[1:]
-                        self.Device1EMG2[-1] = int(dataStr[1:5]) - 1500
-
-                    elif dataStr[0] == '3':
+            if len(dataDevice1[0]) == 5:
+                dataStr = dataDevice1[0]
+                dataStr = str(dataStr)
+                # print(dataStr)
+                if dataStr[0] == '1':
+                    self.Device1EMG1[:-1] = self.Device1EMG1[1:]
+                    self.Device1EMG1[-1] = int(dataStr[1:5]) - 1500
+                    # print(str(int(dataStr[1:5]) - 1500))
+                    self.IMUindex = self.IMUindex + 1
+                    if self.IMUindex % 5 != 0:
                         self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
-                        self.Device1IMUPitch[-1] = int(dataStr[1:5])
-                        # print(int(dataStr[1:5]))
+                        self.Device1IMUPitch[-1] = int(self.Device1IMUPitch[-2])
 
-                        self.DeviceAnle[:-1] = self.DeviceAnle[1:]
-                        self.DeviceAnle[-1] = int(180 - self.DefaultAngle - int(dataStr[1:5]))
-                        print(int(180 - self.DefaultAngle - int(dataStr[1:5])))
-
-                    elif dataStr[0] == '4':
                         self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
-                        self.Device1IMURoll[-1] = int(dataStr[1:5])
+                        self.Device1IMURoll[-1] = int(self.Device1IMURoll[-2])
 
-                    if self.IMUindex % 5 ==0:
-                        # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
-                        self.signalComm.request_Device1graph_update.emit()
+                        # self.Device2IMUPitch[:-1] = self.Device2IMUPitch[1:]
+                        # self.Device2IMUPitch[-1] = int(self.Device2IMUPitch[-2])
+                        #
+                        # self.Device2IMURoll[:-1] = self.Device2IMURoll[1:]
+                        # self.Device2IMURoll[-1] = int(self.Device2IMURoll[-2])
+                elif dataStr[0] == '2':
+                    self.Device1EMG2[:-1] = self.Device1EMG2[1:]
+                    self.Device1EMG2[-1] = int(dataStr[1:5]) - 1500
+
+                elif dataStr[0] == '3':
+                    self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
+                    self.Device1IMUPitch[-1] = int(dataStr[1:5])
+                    print(int(dataStr[1:5]))
+
+                    # self.DeviceAnle[:-1] = self.DeviceAnle[1:]
+                    #single mode
+                    # self.DeviceAnle[-1] = int(180 - self.DefaultAngle - int(dataStr[1:5]))
+                    # self.DeviceAnle[-1] = int(180 - self.DefaultAngle - abs(self.Device2IMUPitch[-1]))
+                    #dual mode
+                    # self.DeviceAnle[-1] = int(int(dataStr[1:5]) - self.Device2IMUPitch[-1])
+                    # print(str(self.DefaultAngle[-1]))
+                    # print(int(int(dataStr[1:5]) - self.Device2IMUPitch[-1]))
+
+                elif dataStr[0] == '4':
+                    self.Device1IMURoll[:-1] = self.Device1IMURoll[1:]
+                    self.Device1IMURoll[-1] = int(dataStr[1:5])
+
+                if self.IMUindex % 5 ==0:
+                    # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
+                    self.signalComm.request_Device1graph_update.emit()
                 # print(" successful pause")
 
 
@@ -309,7 +313,7 @@ class MainWindow(QtWidgets.QMainWindow):
         while self.portNameDevice2 is not None:
             self.ui.pushButton_StartDevice2Plot.setEnabled(False)
             dataDevice2 = self.serDevice2.readline().decode("utf-8", errors="ignore").splitlines()
-            print(dataDevice2)
+            # print(dataDevice2)
             if len(dataDevice2) != 0:
                 if len(dataDevice2[0]) == 5:
                     dataStr = dataDevice2[0]
@@ -317,7 +321,12 @@ class MainWindow(QtWidgets.QMainWindow):
                     # print(dataStr)
                     if dataStr[0] == '5':
                         self.Device2IMUPitch[:-1] = self.Device2IMUPitch[1:]
-                        self.Device2IMUPitch[-1] = int(dataStr[1:5])
+                        #Data
+                        # self.Device2IMUPitch[-1] = abs(int(dataStr[1:5]))
+
+                        # single mode
+                        self.Device2IMUPitch[-1] = int(180 - self.DefaultAngle - abs(int(dataStr[1:5])))
+                        # print(abs(self.Device2IMUPitch[-1]))
                     elif dataStr[0] == '6':
                         self.Device2IMURoll[:-1] = self.Device2IMURoll[1:]
                         self.Device2IMURoll[-1] = int(dataStr[1:5])
