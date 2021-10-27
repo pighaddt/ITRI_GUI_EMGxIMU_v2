@@ -98,14 +98,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def EMGIMUDataSetting(self):
         self.DefaultAngle = 60
-        self.windowWidth_Device1 = 500
+        self.DataList = []
+        self.Index = 0
+        self.windowWidth_Device1 = 1000
         self.windowWidth_Device2 = 100
         #Device1 2 EMG signal + 1 IMU Signal
         self.Device1EMG1 = linspace(0, 0, self.windowWidth_Device1)
         self.Device1EMG2= linspace(0, 0, self.windowWidth_Device1)
-        self.Device1IMUPitch = linspace(0, 0, self.windowWidth_Device1)  # create array that will contain the relevant time series
+
+        self.Device1IMUPitch = linspace(0, 0, int(self.windowWidth_Device1 / 5))  # create array that will contain the relevant time series
         self.Device1IMURoll = linspace(0, 0, self.windowWidth_Device1)  # create array that will contain the relevant time series
-        self.DeviceAnle = linspace(0,0, 100)
+        self.DeviceAnle = linspace(0,0, int(self.windowWidth_Device1 / 5))
         #Device2  1 IMU Signal
         
         self.Device2IMUPitch = linspace(0, 0, self.windowWidth_Device2)  # create array that will contain the relevant time series
@@ -251,16 +254,40 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def start_Device1plot(self):
         self.portNameDevice1 = self.ui.comboBox_Device1CP.currentText()
+        def update(sample):
+            """
+            Load V_ADC raw data
+            """
+            EMG1, EMG2, IMU1 = [], [], []
+            for i in range(sample):
+                value = str(self.serDevice1.readline().decode("utf-8", errors="ignore"))
+                # value = str(self.serDevice1.readline(), 'utf-8')
+                # print("buffer: ", ser.in_waiting)
+                # print(value)
+                if len(value) == 6:  # data + \n
+                    if value[0] == '1':
+                        data = int(value[1:5])-1500
+                        EMG1.append(int(data))
+                    elif value[0] == '2':
+                        data = int(value[1:5]) - 1500
+                        EMG2.append(int(data))
+                    elif value[0] == '3':
+                        data = int(value[1:5])
+                        IMU1.append(int(data))
+            return EMG1, EMG2, IMU1
 
         while self.portNameDevice1 is not None:
             self.ui.pushButton_StartDevice1Plot.setEnabled(False)
             dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore")
+            # load signal
+            # self.update_orva(update)
+
             if len(dataDevice1) == 6: #data + \n
                 # print(dataDevice1)
+                self.Index = self.Index + 1
                 if dataDevice1[0] == '1':
                     self.Device1EMG1[:-1] = self.Device1EMG1[1:]
-                    data = int(dataDevice1[1:5])-1500
-                    self.Device1EMG1[-1] = data
+                    self.Device1EMG1[-1] = int(dataDevice1[1:5])-1500
 
                 if dataDevice1[0] == '2':
                     self.Device1EMG2[:-1] = self.Device1EMG2[1:]
@@ -268,22 +295,37 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if dataDevice1[0] == '3':
                     self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
-                    self.Device1IMUPitch[-1] = int(dataDevice1[2:5])
-                    print(int(dataDevice1[2:5]))
-
-                    # self.DeviceAnle[:-1] = self.DeviceAnle[1:]
-                    # # single mode
-                    # self.DeviceAnle[-1] = int(180 - self.DefaultAngle - int(dataDevice1[2:5]))
+                    self.Device1IMUPitch[-1] = int(dataDevice1[1:5])
+                    print(dataDevice1)
+                    self.DeviceAnle[:-1] = self.DeviceAnle[1:]
+                    # single mode
+                    self.DeviceAnle[-1] = int(180 - self.DefaultAngle - int(dataDevice1[2:5]))
                     # self.DeviceAnle[-1] = int(180 - self.DefaultAngle - abs(self.Device2IMUPitch[-1]))
-                    #dual mode
+                    # dual mode
                     # self.DeviceAnle[-1] = int(int(dataStr[1:5]) - self.Device2IMUPitch[-1])
-                    # print(str(self.DefaultAngle[-1]))
-                    # print(int(int(dataStr[1:5]) - self.Device2IMUPitch[-1]))
                     # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
+                    # QtCore.QCoreApplication.processEvents()
+                if (self.Index % 500 == 0):
                     self.signalComm.request_Device1graph_update.emit()
 
             # print(" successful pause")
 
+    def update_orva(self, update):
+        EMG1, EMG2, IMU1 = update(150)
+        for i in range(len(EMG1)):
+            # Raw data
+            self.Device1EMG1[:-1] = self.Device1EMG1[1:]
+            self.Device1EMG1[-1] = EMG1[i]
+        #
+        for i in range(len(EMG2)):
+            #     Raw data
+            self.Device1EMG2[:-1] = self.Device1EMG2[1:]
+            self.Device1EMG2[-1] = EMG2[i]
+        for i in range(len(IMU1)):
+            # Raw data
+            self.Device1IMUPitch[:-1] = self.Device1IMUPitch[1:]
+            self.Device1IMUPitch[-1] = IMU1[i]
+        self.signalComm.request_Device1graph_update.emit()
 
     def start_Device2plot(self):
         self.portNameDevice2 = self.ui.comboBox_Device2CP.currentText()
@@ -334,9 +376,7 @@ class MainWindow(QtWidgets.QMainWindow):
         curve2.setData(self.Device1EMG2)
         curve3.setData(self.Device1IMUPitch)
         # curve_roll.setData(self.Device1IMURoll)
-        # curve_angle.setData(self.DeviceAnle)
-        # curve3.setData(self.Device2IMUPitch)
-        # curve_roll.setData(self.Device2IMURoll)
+        curve_angle.setData(self.DeviceAnle)
 
     def update_Device2graph(self):
         global curve4, curve5
