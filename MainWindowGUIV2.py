@@ -100,7 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.DefaultAngle = 60
         self.DataList = []
         self.Index = 0
-        self.windowWidth_Device1 = 1000
+        self.windowWidth_Device1 = 1500
         self.windowWidth_Device2 = 100
         #Device1 2 EMG signal + 1 IMU Signal
         self.Device1EMG1 = linspace(0, 0, self.windowWidth_Device1)
@@ -254,34 +254,34 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def start_Device1plot(self):
         self.portNameDevice1 = self.ui.comboBox_Device1CP.currentText()
-        def update(sample):
-            """
-            Load V_ADC raw data
-            """
-            EMG1, EMG2, IMU1 = [], [], []
-            for i in range(sample):
-                value = str(self.serDevice1.readline().decode("utf-8", errors="ignore"))
-                # value = str(self.serDevice1.readline(), 'utf-8')
-                # print("buffer: ", ser.in_waiting)
-                # print(value)
-                if len(value) == 6:  # data + \n
-                    if value[0] == '1':
-                        data = int(value[1:5])-1500
-                        EMG1.append(int(data))
-                    elif value[0] == '2':
-                        data = int(value[1:5]) - 1500
-                        EMG2.append(int(data))
-                    elif value[0] == '3':
-                        data = int(value[1:5])
-                        IMU1.append(int(data))
-            return EMG1, EMG2, IMU1
+        # def update(sample):
+        #     """
+        #     Load V_ADC raw data
+        #     """
+        #     EMG1, EMG2, IMU1 = [], [], []
+        #     for i in range(sample):
+        #         value = str(self.serDevice1.readline().decode("utf-8", errors="ignore"))
+        #         # value = str(self.serDevice1.readline(), 'utf-8')
+        #         # print("buffer: ", ser.in_waiting)
+        #         # print(value)
+        #         if len(value) == 6:  # data + \n
+        #             if value[0] == '1':
+        #                 data = int(value[1:5])-1500
+        #                 EMG1.append(int(data))
+        #             elif value[0] == '2':
+        #                 data = int(value[1:5]) - 1500
+        #                 EMG2.append(int(data))
+        #             elif value[0] == '3':
+        #                 data = int(value[1:5])
+        #                 IMU1.append(int(data))
+        #     return EMG1, EMG2, IMU1
 
         while self.portNameDevice1 is not None:
             self.ui.pushButton_StartDevice1Plot.setEnabled(False)
             dataDevice1 = self.serDevice1.readline().decode("utf-8", errors="ignore")
             # load signal
             # self.update_orva(update)
-
+            print(str(dataDevice1))
             if len(dataDevice1) == 6: #data + \n
                 # print(dataDevice1)
                 self.Index = self.Index + 1
@@ -302,10 +302,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.DeviceAnle[-1] = int(180 - self.DefaultAngle - int(dataDevice1[2:5]))
                     # self.DeviceAnle[-1] = int(180 - self.DefaultAngle - abs(self.Device2IMUPitch[-1]))
                     # dual mode
-                    # self.DeviceAnle[-1] = int(int(dataStr[1:5]) - self.Device2IMUPitch[-1])
+                    # self.DeviceAnle[-1] = int(int(dataDevice1[2:5]) - self.Device2IMUPitch[-1])
                     # Emitting this signal ensures update_graph() will run in the main thread since the signal was connected in the __init__ function (main thread)
                     # QtCore.QCoreApplication.processEvents()
-                if (self.Index % 500 == 0):
+                if (self.Index % 200 == 0):
                     self.signalComm.request_Device1graph_update.emit()
 
             # print(" successful pause")
@@ -505,8 +505,12 @@ class MainWindow(QtWidgets.QMainWindow):
             print("Save Device1 Data to .CSV")
             for word in range(1, len(self.Device1EMG1)):
                 if word == 1:
-                    wr.writerow(["EMG Channel 1 ", "EMG Channel 2", "IMU 1 Pitch", "IMU 1 Roll"])
-                wr.writerow([self.Device1EMG1[word], self.Device1EMG2[word], self.Device1IMUPitch[word], self.Device1IMURoll[word]])
+                    wr.writerow(["EMG Channel 1 ", "EMG Channel 2", "IMU 1 Pitch"])
+                if word < len(self.DeviceAnle):
+                    wr.writerow([self.Device1EMG1[word], self.Device1EMG2[word], self.DeviceAnle[word]])
+                else:
+                    wr.writerow([self.Device1EMG1[word], self.Device1EMG2[word]])
+
 
     def Device2SaveData(self):
         with open(self.storagePathDevice2, "w", newline="\n") as csvfile:
